@@ -1,5 +1,5 @@
 # Hugging Face Spaces (Docker SDK) expects the app to listen on port 7860
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
