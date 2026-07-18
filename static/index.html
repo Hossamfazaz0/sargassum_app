@@ -1,23 +1,17 @@
-<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<!DOCTYPE html><html lang="en"><head>
 <meta charset="utf-8">
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
-<title>Sargassum AI - Upload Specimen</title>
-<!-- Tailwind CSS -->
+<title>Sargassum AI - Classify Image</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<!-- Google Fonts -->
-<link href="https://fonts.googleapis.com" rel="preconnect">
-<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" rel="stylesheet">
-<!-- Material Symbols -->
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
-<!-- Tailwind Configuration -->
 <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
-                    "colors": {
+                    colors: {
                         "on-tertiary-fixed-variant": "#822800",
                         "on-secondary": "#ffffff",
                         "inverse-on-surface": "#eff1f3",
@@ -66,20 +60,20 @@
                         "on-primary-fixed": "#001f2b",
                         "primary-fixed-dim": "#96ceeb"
                     },
-                    "borderRadius": {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px"
                     },
-                    "spacing": {
-                        "gutter": "24px",
+                    spacing: {
+                        gutter: "24px",
                         "container-max": "1440px",
                         "margin-desktop": "64px",
-                        "unit": "4px",
+                        unit: "4px",
                         "margin-mobile": "16px"
                     },
-                    "fontFamily": {
+                    fontFamily: {
                         "label-md": ["Space Grotesk"],
                         "headline-lg-mobile": ["Inter"],
                         "body-lg": ["Inter"],
@@ -88,14 +82,14 @@
                         "headline-md": ["Inter"],
                         "headline-lg": ["Inter"]
                     },
-                    "fontSize": {
-                        "label-md": ["14px", { "lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "500" }],
-                        "headline-lg-mobile": ["24px", { "lineHeight": "1.2", "fontWeight": "700" }],
-                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
-                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
-                        "label-sm": ["12px", { "lineHeight": "1", "fontWeight": "600" }],
-                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
-                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    fontSize: {
+                        "label-md": ["14px", { lineHeight: "1.2", letterSpacing: "0.05em", fontWeight: "500" }],
+                        "headline-lg-mobile": ["24px", { lineHeight: "1.2", fontWeight: "700" }],
+                        "body-lg": ["18px", { lineHeight: "1.6", fontWeight: "400" }],
+                        "body-md": ["16px", { lineHeight: "1.5", fontWeight: "400" }],
+                        "label-sm": ["12px", { lineHeight: "1", fontWeight: "600" }],
+                        "headline-md": ["24px", { lineHeight: "1.3", fontWeight: "600" }],
+                        "headline-lg": ["32px", { lineHeight: "1.2", letterSpacing: "-0.02em", fontWeight: "700" }]
                     }
                 }
             }
@@ -105,78 +99,68 @@
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
-        /* Hide scrollbar for cleaner look */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--tw-colors-outline-variant); border-radius: 10px; }
-        @keyframes shimmer {
-            100% { transform: translateX(100%); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
         }
     </style>
 </head>
-<body class="bg-background text-on-background font-body-md min-h-screen overflow-hidden flex flex-col antialiased">
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col antialiased">
 
-<div class="flex flex-1 h-screen">
-<main class="flex-1 h-full overflow-y-auto bg-background p-margin-mobile md:p-margin-desktop flex flex-col">
-<div class="max-w-5xl mx-auto w-full flex flex-col flex-1 h-full">
-
-<header class="mb-12">
-<h1 class="font-headline-lg text-primary mb-3 text-headline-lg-mobile">Upload Sargassum Specimen</h1>
-<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
-                        Provide a clear, high-resolution image of the specimen. The AI model will process the image to identify key morphological features and taxonomic classification.
-                    </p>
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-surface-dim docked full-width top-0 border-b border-outline-variant dark:border-outline flat no shadows">
+<div class="flex justify-between items-center px-gutter w-full h-16 max-w-container-max mx-auto">
+<div class="flex items-center gap-8">
+<a class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed" href="#">SargassumAI</a>
+<nav class="hidden md:flex gap-6">
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors cursor-pointer active:opacity-80 py-2 px-3 rounded-lg font-body-md text-body-md" href="#">Dashboard</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors cursor-pointer active:opacity-80 py-2 px-3 rounded-lg font-body-md text-body-md" href="#">Analytics</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors cursor-pointer active:opacity-80 py-2 px-3 rounded-lg font-body-md text-body-md" href="#">Species Map</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors cursor-pointer active:opacity-80 py-2 px-3 rounded-lg font-body-md text-body-md" href="#">Data Stream</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container border border-outline-variant rounded-full text-body-md focus:outline-none focus:ring-2 focus:ring-secondary w-64 transition-shadow" placeholder="Search..." type="text">
+</div>
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</div>
 </header>
 
-<div class="flex-1 flex flex-col items-center justify-center min-h-[400px]">
-<div class="w-full max-w-3xl bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col p-1">
-<div class="h-1 w-full bg-secondary"></div>
+<div class="flex flex-1 max-w-container-max mx-auto w-full relative">
+<main class="flex-1 w-full p-gutter md:p-margin-desktop min-h-[calc(100vh-64px)] relative">
+<div class="max-w-4xl mx-auto flex flex-col items-center justify-center h-full text-center">
 
-<!-- DROPZONE (click or drag) -->
-<div id="dropzone" class="p-8 md:p-16 flex flex-col items-center justify-center text-center relative group border-2 border-dashed border-outline-variant m-2 rounded-lg hover:border-secondary hover:bg-surface-bright transition-all duration-300 ease-in-out cursor-pointer">
-
-<div id="iconWrap" class="w-24 h-24 rounded-full bg-secondary-container flex items-center justify-center mb-6 group-hover:scale-105 transition-transform duration-300 shadow-sm">
-<span class="material-symbols-outlined text-[48px] text-on-secondary-container" style="font-variation-settings: 'FILL' 1;">add_a_photo</span>
+<!-- ICON -->
+<div id="mainIconWrap" class="mb-8 p-6 bg-surface-container-low rounded-2xl border border-outline-variant inline-block">
+<span class="material-symbols-outlined text-[64px] text-primary mb-4" style="font-variation-settings: 'wght' 200;">cloud_upload</span>
 </div>
 
-<!-- Image preview (hidden until a file is chosen) -->
-<img id="preview" class="hidden w-40 h-40 object-cover rounded-lg mb-6 shadow-sm" alt="Preview of uploaded specimen">
+<!-- Preview shown after a file is chosen -->
+<img id="mainPreview" class="hidden w-48 h-48 object-cover rounded-2xl mb-8 shadow-md border border-outline-variant" alt="Preview of uploaded specimen">
 
-<h2 id="dzTitle" class="font-headline-md text-headline-md text-on-surface mb-2">Tap to upload Sargassum image</h2>
+<h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-4">Upload Sargassum Specimen</h1>
+<p id="mainSubtext" class="font-body-lg text-body-lg text-on-surface-variant mb-12 max-w-2xl">
+                    Initiate AI classification by securely uploading a high-resolution image of your Sargassum sample. Our neural network will analyze morphological features for instant taxonomic identification.
+                </p>
 
-<button id="browseBtn" type="button" class="px-8 py-3 rounded-lg border-2 border-secondary text-secondary font-label-md text-label-md bg-transparent hover:bg-secondary hover:text-on-secondary transition-colors mb-8 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2">
-                                Browse Files
-                            </button>
+<button id="selectBtn" type="button" class="px-8 py-4 bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-all shadow-md hover:shadow-lg flex items-center gap-3 transform hover:-translate-y-0.5">
+<span class="material-symbols-outlined">upload_file</span>
+<span id="selectBtnLabel">Select Image to Upload</span>
+</button>
+<p class="font-label-sm text-label-sm text-outline mt-4">Supported formats: JPG, PNG, TIFF (Max 20MB)</p>
 
-<div class="flex flex-col md:flex-row items-center gap-2 md:gap-6 opacity-80">
-<div class="flex items-center gap-2 text-on-surface-variant">
-<span class="material-symbols-outlined text-[16px]">image</span>
-<span class="font-label-sm text-label-sm">Supported formats: JPG • JPEG • PNG</span>
-</div>
-<div class="hidden md:block w-1 h-1 rounded-full bg-outline-variant"></div>
-<div class="flex items-center gap-2 text-on-surface-variant">
-<span class="material-symbols-outlined text-[16px]">sd_card</span>
-<span class="font-label-sm text-label-sm">Max file size: 25MB</span>
-</div>
-</div>
+<input id="fileInput" accept="image/jpeg, image/png, image/tiff" class="hidden" type="file">
 
-<!-- Progress bar -->
-<div class="w-full max-w-md mt-10">
-<div class="flex justify-between items-center mb-2">
-<span id="progressLabel" class="font-label-sm text-label-sm text-on-surface-variant">Ready for upload</span>
-<span id="progressPct" class="font-label-sm text-label-sm text-on-surface-variant">0%</span>
-</div>
-<div class="w-full h-1.5 bg-surface-variant rounded-full overflow-hidden">
-<div id="progressBar" class="h-full bg-secondary w-0 rounded-full transition-all duration-500 relative overflow-hidden">
-<div id="shimmer" class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-full -translate-x-full"></div>
-</div>
-</div>
-</div>
-
-<input id="fileInput" accept="image/jpeg, image/png, image/jpg" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" type="file">
-</div>
-
-<!-- RESULT CARD (hidden until a prediction comes back) -->
-<div id="resultCard" class="hidden m-2 mt-0 p-8 rounded-lg bg-surface-bright border border-outline-variant">
+<!-- RESULT CARD -->
+<div id="resultCard" class="hidden mt-10 w-full max-w-xl p-6 sm:p-8 rounded-2xl bg-surface-container-lowest border border-outline-variant shadow-sm text-left">
 <div class="flex items-center justify-between mb-4">
 <h3 class="font-headline-md text-on-surface text-lg">Result</h3>
 <button id="resetBtn" type="button" class="text-on-surface-variant hover:text-secondary transition-colors">
@@ -188,65 +172,212 @@
 </div>
 
 <!-- ERROR MESSAGE -->
-<div id="errorBox" class="hidden m-2 mt-0 p-4 rounded-lg bg-error-container text-on-error-container text-body-md"></div>
+<div id="errorBox" class="hidden mt-6 w-full max-w-xl p-4 rounded-lg bg-error-container text-on-error-container text-body-md"></div>
 
 </div>
+
+<!-- GUIDE MODAL — shown before the user is allowed to upload -->
+<div id="guideModal" class="fixed inset-0 bg-on-background/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+<div class="bg-surface-container-lowest w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col my-4 sm:my-8 border border-outline-variant relative overflow-hidden animate-[fadeIn_0.3s_ease-out] max-h-[90vh]">
+<div class="p-6 sm:p-8 pb-6 border-b border-outline-variant bg-surface relative">
+<div class="absolute top-0 left-0 w-full h-1 bg-secondary"></div>
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-md text-primary mb-2 pr-8">Capture the Best Sargassum Image</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">To achieve the highest classification accuracy, please ensure your photo follows these rigorous guidelines.</p>
+<button id="closeModalBtn" type="button" class="absolute top-4 sm:top-6 right-4 sm:right-6 p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-6 sm:p-8 overflow-y-auto max-h-[60vh] sm:max-h-[614px] flex-1">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 gap-y-8">
+<div>
+<h3 class="font-label-md text-label-md text-secondary flex items-center gap-2 mb-4 sm:mb-6">
+<span class="material-symbols-outlined text-[#16a34a]">check_circle</span>
+                                    ACCEPTED IMAGES
+                                </h3>
+<div class="grid grid-cols-2 gap-2 sm:gap-4">
+<div class="bg-surface p-2 sm:p-3 rounded-lg border border-[#16a34a]/30 flex flex-col items-center text-center">
+<div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 overflow-hidden"><img src="images/accepted-specimen.jpg" alt="Accepted: entire specimen visible" class="w-full h-full object-cover"></div>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Entire specimen visible</span>
+</div>
+<div class="bg-surface p-2 sm:p-3 rounded-lg border border-[#16a34a]/30 flex flex-col items-center text-center">
+<div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 overflow-hidden"><img src="images/accepted-specimen.jpg" alt="Accepted: specimen centered" class="w-full h-full object-cover"></div>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Specimen centered</span>
+</div>
+<div class="bg-surface p-2 sm:p-3 rounded-lg border border-[#16a34a]/30 flex flex-col items-center text-center">
+<div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">wallpaper</span>
+</div>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Plain light background</span>
+</div>
+<div class="bg-surface p-2 sm:p-3 rounded-lg border border-[#16a34a]/30 flex flex-col items-center text-center">
+<div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">light_mode</span>
+</div>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Good natural lighting</span>
+</div>
+<div class="bg-surface p-2 sm:p-3 rounded-lg border border-[#16a34a]/30 flex flex-col items-center text-center">
+<div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">hd</span>
+</div>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">High-resolution</span>
+</div>
+<div class="bg-surface p-2 sm:p-3 rounded-lg border border-[#16a34a]/30 flex flex-col items-center text-center">
+<div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">filter_1</span>
+</div>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">One specimen only</span>
+</div>
+</div>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-error flex items-center gap-2 mb-4 sm:mb-6">
+<span class="material-symbols-outlined">cancel</span>
+                                    NOT ACCEPTED
+                                </h3>
+<div class="grid grid-cols-2 gap-2 sm:gap-4">
+<div class="bg-surface p-2 sm:p-3 rounded-lg border border-error/30 flex flex-col items-center text-center">
+<div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 flex items-center justify-center"><span class="material-symbols-outlined text-outline">blur_on</span></div>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Blurry/Out-of-focus</span>
+</div>
+<div class="bg-surface p-2 sm:p-3 rounded-lg border border-error/30 flex flex-col items-center text-center">
+<div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">contrast</span>
+</div>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Dark shadows/Poor lighting</span>
+</div>
+<div class="bg-surface p-2 sm:p-3 rounded-lg border border-error/30 flex flex-col items-center text-center">
+<div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">crop</span>
+</div>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Cropped specimen</span>
+</div>
+<div class="bg-surface p-2 sm:p-3 rounded-lg border border-error/30 flex flex-col items-center text-center">
+<div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 overflow-hidden"><img src="images/reject-overlapping.png" alt="Not accepted: overlapping specimens" class="w-full h-full object-cover"></div>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Overlapping specimens</span>
+</div>
+<div class="bg-surface p-2 sm:p-3 rounded-lg border border-error/30 flex flex-col items-center text-center">
+<div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 overflow-hidden"><img src="images/reject-cluttered.png" alt="Not accepted: cluttered background" class="w-full h-full object-cover"></div>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Cluttered background</span>
+</div>
+<div class="bg-surface p-2 sm:p-3 rounded-lg border border-error/30 flex flex-col items-center text-center">
+<div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">sd</span>
+</div>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Low-resolution/Noisy</span>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-6 sm:mt-8 bg-surface-container-low border border-outline-variant p-4 sm:p-6 rounded-xl flex gap-3 sm:gap-4">
+<span class="material-symbols-outlined text-secondary mt-1">info</span>
+<div>
+<h4 class="font-label-md text-label-md text-primary mb-2">Tips for Best Results</h4>
+<ul class="font-body-md text-body-md text-on-surface-variant flex flex-wrap gap-x-6 sm:gap-x-8 gap-y-1 sm:gap-y-2 list-disc list-inside">
+<li class="">Lay specimen flat</li>
+<li class="">Top-down view</li>
+<li class="">Leave a margin</li>
+<li class="">Avoid reflections</li>
+<li class="">No other objects</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="p-4 sm:p-6 border-t border-outline-variant bg-surface flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-4">
+<label class="flex items-center gap-2 cursor-pointer group w-full md:w-auto mb-2 md:mb-0 justify-center">
+<input id="dontShowAgain" class="rounded border-outline text-secondary focus:ring-secondary w-4 h-4 bg-surface-container-lowest" type="checkbox">
+<span class="font-body-md text-body-md text-on-surface-variant group-hover:text-on-surface transition-colors">Don't show this guide again</span>
+</label>
+<div class="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 w-full md:w-auto">
+<button id="cancelModalBtn" type="button" class="w-full sm:w-auto px-6 py-3 sm:py-2 rounded-lg border border-primary text-primary font-label-md text-label-md hover:bg-surface-container-high transition-colors">
+                                Cancel
+                            </button>
+<button id="continueBtn" type="button" class="w-full sm:w-auto px-6 py-3 sm:py-2 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm">
+                                Continue to Upload
+                            </button>
+</div>
+</div>
+</div>
 </div>
 
-<div class="mt-8 flex items-center justify-center gap-2 text-on-surface-variant opacity-70">
-<span class="material-symbols-outlined text-[16px]">lock</span>
-<p class="font-label-sm text-label-sm">All uploads are encrypted and processed in a secure environment.</p>
-</div>
-</div>
-</div>
 </main>
 </div>
+
+<footer class="bg-surface-container-highest dark:bg-surface-container-low w-full py-6 mt-auto border-t border-outline-variant dark:border-outline flat no shadows flex flex-col md:flex-row justify-between items-center px-margin-desktop z-10 relative">
+<div class="font-label-sm text-label-sm text-on-surface dark:text-on-surface mb-4 md:mb-0 text-center md:text-left">
+            © 2026 Sargazoom — BIOMAS Citizen Science Initiative
+        </div>
+<div class="flex flex-wrap gap-4 sm:gap-6 justify-center">
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors cursor-pointer underline-offset-4 hover:underline" href="#">Privacy Policy</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors cursor-pointer underline-offset-4 hover:underline" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors cursor-pointer underline-offset-4 hover:underline" href="#">Contact Support</a>
+</div>
+</footer>
 
 <script>
   // If your FastAPI backend is served from a different origin than this
   // HTML file, set the full URL here, e.g. "https://sargassum-classifier.onrender.com/predict"
   const PREDICT_URL = "/predict";
+  const SKIP_GUIDE_KEY = "sargassum_skip_guide";
 
-  const dropzone = document.getElementById('dropzone');
+  const guideModal = document.getElementById('guideModal');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  const cancelModalBtn = document.getElementById('cancelModalBtn');
+  const continueBtn = document.getElementById('continueBtn');
+  const dontShowAgain = document.getElementById('dontShowAgain');
+
+  const selectBtn = document.getElementById('selectBtn');
+  const selectBtnLabel = document.getElementById('selectBtnLabel');
   const fileInput = document.getElementById('fileInput');
-  const browseBtn = document.getElementById('browseBtn');
-  const preview = document.getElementById('preview');
-  const iconWrap = document.getElementById('iconWrap');
-  const dzTitle = document.getElementById('dzTitle');
-  const progressBar = document.getElementById('progressBar');
-  const progressPct = document.getElementById('progressPct');
-  const progressLabel = document.getElementById('progressLabel');
+  const mainIconWrap = document.getElementById('mainIconWrap');
+  const mainPreview = document.getElementById('mainPreview');
+  const mainSubtext = document.getElementById('mainSubtext');
   const resultCard = document.getElementById('resultCard');
   const verdict = document.getElementById('verdict');
   const probBars = document.getElementById('probBars');
   const errorBox = document.getElementById('errorBox');
   const resetBtn = document.getElementById('resetBtn');
 
-  browseBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    fileInput.click();
+  // Show the guide modal by default, unless the user previously opted out.
+  function initGuide() {
+    const skip = localStorage.getItem(SKIP_GUIDE_KEY) === 'true';
+    if (skip) {
+      hideModal();
+    } else {
+      guideModal.classList.remove('hidden');
+    }
+  }
+
+  function hideModal() {
+    guideModal.classList.add('hidden');
+  }
+
+  closeModalBtn.addEventListener('click', hideModal);
+  cancelModalBtn.addEventListener('click', hideModal);
+  continueBtn.addEventListener('click', () => {
+    if (dontShowAgain.checked) {
+      localStorage.setItem(SKIP_GUIDE_KEY, 'true');
+    }
+    hideModal();
   });
 
-  dropzone.addEventListener('dragover', (e) => e.preventDefault());
-  dropzone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  // Clicking the primary button either re-opens the guide (first time on a
+  // fresh session where they haven't seen it) or opens the file picker.
+  selectBtn.addEventListener('click', () => {
+    fileInput.click();
   });
 
   fileInput.addEventListener('change', () => {
     if (fileInput.files.length) handleFile(fileInput.files[0]);
   });
 
-  resetBtn.addEventListener('click', () => resetUI());
+  resetBtn.addEventListener('click', resetUI);
 
   function resetUI() {
     fileInput.value = '';
-    preview.classList.add('hidden');
-    iconWrap.classList.remove('hidden');
-    dzTitle.textContent = 'Tap to upload Sargassum image';
-    progressBar.style.width = '0%';
-    progressPct.textContent = '0%';
-    progressLabel.textContent = 'Ready for upload';
+    mainPreview.classList.add('hidden');
+    mainIconWrap.classList.remove('hidden');
+    selectBtnLabel.textContent = 'Select Image to Upload';
+    mainSubtext.textContent = 'Initiate AI classification by securely uploading a high-resolution image of your Sargassum sample. Our neural network will analyze morphological features for instant taxonomic identification.';
     resultCard.classList.add('hidden');
     errorBox.classList.add('hidden');
   }
@@ -255,19 +386,16 @@
     errorBox.classList.add('hidden');
     resultCard.classList.add('hidden');
 
-    // Show preview
     const reader = new FileReader();
     reader.onload = (e) => {
-      preview.src = e.target.result;
-      preview.classList.remove('hidden');
-      iconWrap.classList.add('hidden');
+      mainPreview.src = e.target.result;
+      mainPreview.classList.remove('hidden');
+      mainIconWrap.classList.add('hidden');
     };
     reader.readAsDataURL(file);
 
-    dzTitle.textContent = file.name;
-    progressLabel.textContent = 'Analyzing specimen...';
-    progressPct.textContent = '';
-    progressBar.style.width = '60%'; // indeterminate-ish feedback while awaiting response
+    selectBtnLabel.textContent = 'Analyzing...';
+    mainSubtext.textContent = `Processing ${file.name} — this usually takes a couple of seconds.`;
 
     const formData = new FormData();
     formData.append('file', file);
@@ -279,14 +407,12 @@
         throw new Error(errBody.detail || `Server error (${res.status})`);
       }
       const data = await res.json();
-      progressBar.style.width = '100%';
-      progressPct.textContent = '100%';
-      progressLabel.textContent = 'Analysis complete';
+      selectBtnLabel.textContent = 'Upload Another Image';
+      mainSubtext.textContent = 'Classification complete — see the result below.';
       renderResult(data);
     } catch (err) {
-      progressBar.style.width = '0%';
-      progressLabel.textContent = 'Ready for upload';
-      progressPct.textContent = '0%';
+      selectBtnLabel.textContent = 'Select Image to Upload';
+      mainSubtext.textContent = 'Something went wrong — please try again with a different image.';
       errorBox.textContent = '⚠️ ' + err.message;
       errorBox.classList.remove('hidden');
     }
@@ -312,6 +438,8 @@
     }
     resultCard.classList.remove('hidden');
   }
+
+  initGuide();
 </script>
 
 </body></html>
