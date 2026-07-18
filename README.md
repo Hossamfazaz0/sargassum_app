@@ -1,2 +1,0 @@
-# sargassum_app
-w

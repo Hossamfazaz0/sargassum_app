@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classificateur Sargassum</title>
+<style>
+  :root {
+    --sea: #0d7377;
+    --sand: #f4e9d8;
+    --ink: #1a1a1a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--sand);
+    color: var(--ink);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: 32px;
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+  }
+  h1 {
+    font-size: 1.3rem;
+    color: var(--sea);
+    margin-bottom: 4px;
+  }
+  p.subtitle {
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 0;
+    margin-bottom: 24px;
+  }
+  #dropzone {
+    border: 2px dashed var(--sea);
+    border-radius: 12px;
+    padding: 28px 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  #dropzone:hover, #dropzone.drag {
+    background: #eefbfa;
+  }
+  #dropzone img {
+    max-width: 100%;
+    max-height: 220px;
+    border-radius: 8px;
+    margin-top: 12px;
+  }
+  input[type="file"] { display: none; }
+  button {
+    margin-top: 20px;
+    background: var(--sea);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    width: 100%;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  #result {
+    margin-top: 24px;
+    text-align: left;
+  }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+  }
+  .bar-label { width: 40px; font-weight: 600; }
+  .bar-track {
+    flex: 1;
+    background: #eee;
+    border-radius: 6px;
+    overflow: hidden;
+    height: 10px;
+  }
+  .bar-fill {
+    height: 100%;
+    background: var(--sea);
+  }
+  .bar-pct { width: 48px; text-align: right; color: #555; }
+  #verdict {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--sea);
+    margin-bottom: 14px;
+  }
+  #error { color: #c0392b; margin-top: 14px; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>🌊 Classificateur Sargassum</h1>
+    <p class="subtitle">Déposez une photo (crop centré) pour identifier le morphotype</p>
+
+    <div id="dropzone">
+      <div id="dz-text">📷 Cliquez ou glissez une image ici</div>
+      <img id="preview" style="display:none;">
+    </div>
+    <input type="file" id="fileInput" accept="image/*">
+
+    <button id="submitBtn" disabled>Analyser</button>
+
+    <div id="result"></div>
+    <div id="error"></div>
+  </div>
+
+<script>
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const preview = document.getElementById('preview');
+  const dzText = document.getElementById('dz-text');
+  const submitBtn = document.getElementById('submitBtn');
+  const resultDiv = document.getElementById('result');
+  const errorDiv = document.getElementById('error');
+
+  let selectedFile = null;
+
+  dropzone.addEventListener('click', () => fileInput.click());
+
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('drag');
+  });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('drag');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) handleFile(fileInput.files[0]);
+  });
+
+  function handleFile(file) {
+    selectedFile = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      dzText.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+    submitBtn.disabled = false;
+    resultDiv.innerHTML = '';
+    errorDiv.textContent = '';
+  }
+
+  submitBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Analyse en cours...';
+    errorDiv.textContent = '';
+    resultDiv.innerHTML = '';
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+      const res = await fetch('/predict', { method: 'POST', body: formData });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.detail || `Erreur serveur (${res.status})`);
+      }
+      const data = await res.json();
+      renderResult(data);
+    } catch (err) {
+      errorDiv.textContent = '⚠️ ' + err.message;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Analyser';
+    }
+  });
+
+  function renderResult(data) {
+    let html = `<div id="verdict">${data.prediction} — ${(data.confidence * 100).toFixed(1)}%</div>`;
+    const entries = Object.entries(data.probabilities).sort((a, b) => b[1] - a[1]);
+    for (const [name, prob] of entries) {
+      const pct = (prob * 100).toFixed(1);
+      html += `
+        <div class="bar-row">
+          <div class="bar-label">${name}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+          <div class="bar-pct">${pct}%</div>
+        </div>`;
+    }
+    resultDiv.innerHTML = html;
+  }
+</script>
+</body>
+</html>
