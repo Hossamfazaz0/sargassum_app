@@ -107,33 +107,6 @@
 </head>
 <body class="bg-background text-on-background font-body-md min-h-screen flex flex-col antialiased">
 
-<!-- TopNavBar -->
-<header class="bg-surface dark:bg-surface-dim docked full-width top-0 border-b border-outline-variant dark:border-outline flat no shadows">
-<div class="flex justify-between items-center px-gutter w-full h-16 max-w-container-max mx-auto">
-<div class="flex items-center gap-8">
-<a class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed" href="#">SargassumAI</a>
-<nav class="hidden md:flex gap-6">
-<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors cursor-pointer active:opacity-80 py-2 px-3 rounded-lg font-body-md text-body-md" href="#">Dashboard</a>
-<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors cursor-pointer active:opacity-80 py-2 px-3 rounded-lg font-body-md text-body-md" href="#">Analytics</a>
-<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors cursor-pointer active:opacity-80 py-2 px-3 rounded-lg font-body-md text-body-md" href="#">Species Map</a>
-<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors cursor-pointer active:opacity-80 py-2 px-3 rounded-lg font-body-md text-body-md" href="#">Data Stream</a>
-</nav>
-</div>
-<div class="flex items-center gap-4">
-<div class="relative hidden sm:block">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
-<input class="pl-10 pr-4 py-2 bg-surface-container border border-outline-variant rounded-full text-body-md focus:outline-none focus:ring-2 focus:ring-secondary w-64 transition-shadow" placeholder="Search..." type="text">
-</div>
-<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">
-<span class="material-symbols-outlined">notifications</span>
-</button>
-<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">
-<span class="material-symbols-outlined">settings</span>
-</button>
-</div>
-</div>
-</header>
-
 <div class="flex flex-1 max-w-container-max mx-auto w-full relative">
 <main class="flex-1 w-full p-gutter md:p-margin-desktop min-h-[calc(100vh-64px)] relative">
 <div class="max-w-4xl mx-auto flex flex-col items-center justify-center h-full text-center">
@@ -302,15 +275,10 @@
 </main>
 </div>
 
-<footer class="bg-surface-container-highest dark:bg-surface-container-low w-full py-6 mt-auto border-t border-outline-variant dark:border-outline flat no shadows flex flex-col md:flex-row justify-between items-center px-margin-desktop z-10 relative">
-<div class="font-label-sm text-label-sm text-on-surface dark:text-on-surface mb-4 md:mb-0 text-center md:text-left">
+<footer class="bg-surface-container-highest dark:bg-surface-container-low w-full py-6 mt-auto border-t border-outline-variant dark:border-outline flat no shadows flex justify-center items-center px-margin-desktop z-10 relative">
+<div class="font-label-sm text-label-sm text-on-surface dark:text-on-surface text-center">
             © 2026 Sargazoom — BIOMAS Citizen Science Initiative
         </div>
-<div class="flex flex-wrap gap-4 sm:gap-6 justify-center">
-<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors cursor-pointer underline-offset-4 hover:underline" href="#">Privacy Policy</a>
-<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors cursor-pointer underline-offset-4 hover:underline" href="#">Terms of Service</a>
-<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors cursor-pointer underline-offset-4 hover:underline" href="#">Contact Support</a>
-</div>
 </footer>
 
 <script>
