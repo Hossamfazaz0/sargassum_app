@@ -1,186 +1,168 @@
-# ================================================================
-# 🌐 SARGASSUM CLASSIFIER — FASTAPI SERVING APP
-# ================================================================
-# Serves the fine-tuned EfficientNetB3 beach model (sargassum_model_beach1.h5)
-# behind a REST API + a simple upload page, for deployment on Hugging Face
-# Spaces (Docker SDK) or any Python host (Render, Railway, etc).
-#
-# Mirrors EXACTLY the loading + preprocessing logic from the Colab
-# single-image tester, so predictions match what you validated locally:
-#   - mixed_float16 policy set BEFORE loading (weight layout must match)
-#   - two-stage load: direct load_model() -> fallback rebuild + load_weights
-#   - preprocessing: BGR->RGB, resize to (300,300), float32
-#     (NO manual normalization — efn_preprocess is baked into the model
-#     via the Lambda layer, so we must NOT double-preprocess here)
-# ================================================================
+"""
+Sargassum Morphotype Classifier — Pilot Test App (v2)
+--------------------------------------------------------
+Public-facing Gradio demo for the "lab-first reliable fine-tuning" model
+(LEMAR / IRD Sargassum project). Matches the updated training pipeline:
 
-import os
-import io
+  - Preprocessing (EfficientNet preprocess_input) is baked INTO the model
+    via a Lambda layer, so this app feeds raw resized images (0-255),
+    NOT pre-normalized ones.
+  - TTA (test-time augmentation) is the DEFAULT inference mode, matching
+    predict_reliable() from the training script (7 augmented crops +
+    1 center resize, averaged).
+  - Temperature scaling is applied with the fixed T fit during training.
+  - Safety gate: predictions below CONFIDENCE_THRESHOLD are flagged
+    "Review needed" instead of stated confidently.
+
+Model is pulled automatically from Hugging Face Hub at startup:
+    Hossamfazaz/sargassum_enhanced_version
+"""
+
+import gradio as gr
 import numpy as np
 import cv2
-import tensorflow as tf
-from tensorflow.keras import layers, Model, mixed_precision
+import time
+import albumentations as A
+from huggingface_hub import hf_hub_download, list_repo_files
 from tensorflow.keras.models import load_model
-from tensorflow.keras.applications.efficientnet import (
-    EfficientNetB3, preprocess_input as efn_preprocess)
+from tensorflow.keras.applications.efficientnet import preprocess_input as efn_preprocess
 
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-from fastapi.middleware.cors import CORSMiddleware
+# -----------------------------
+# CONFIG — matches training script
+# -----------------------------
+HF_REPO_ID = "Hossamfazaz/sargassum_enhanced_version"
+IMG_SIZE = 300
+CLASS_NAMES = ["SN1", "SF3", "SN8"]  # must match CLASS_TO_INDEX order from training
+CONFIDENCE_THRESHOLD = 0.75          # lowered from training default (0.85) for the pilot
+TEMPERATURE = 0.852                  # fixed value fit during calibration (from training run)
+N_TTA = 7                            # matches predict_reliable() in training script
 
-# ================================================================
-# ⚙️ SETTINGS — must match training/testing exactly
-# ================================================================
-MODEL_PATH  = os.environ.get("MODEL_PATH", "sargassum_model_beach1.h5")
-CLASS_NAMES = ['SN1', 'SF3', 'SN8']
-IMG_SIZE    = 300
-NUM_CLASSES = len(CLASS_NAMES)
+# -----------------------------
+# Download + load model from Hugging Face Hub
+# -----------------------------
+print(f"Locating model file in {HF_REPO_ID} ...")
+repo_files = list_repo_files(HF_REPO_ID)
+h5_files = [f for f in repo_files if f.endswith(".h5")]
+if not h5_files:
+    raise RuntimeError(
+        f"No .h5 file found in {HF_REPO_ID}. Files present: {repo_files}. "
+        "Update HF_REPO_ID / filename in app.py if the repo structure changed."
+    )
+model_filename = h5_files[0]
+print(f"Found model file: {model_filename}. Downloading...")
+model_path = hf_hub_download(repo_id=HF_REPO_ID, filename=model_filename)
 
-# If the model isn't present locally (e.g. it's too large for the Git repo),
-# download it from a Hugging Face Hub MODEL repo at container startup.
-# Set these two env vars on Render if you go this route; leave unset if
-# you're committing the .h5 directly (e.g. via Git LFS) instead.
-HF_MODEL_REPO = os.environ.get("HF_MODEL_REPO")       # e.g. "your-username/sargassum-model"
-HF_MODEL_FILE = os.environ.get("HF_MODEL_FILE", "sargassum_model_beach1.h5")
+print("Loading model...")
+# The model's Lambda preprocessing layer references efn_preprocess by name,
+# so it must be passed via custom_objects to reconstruct correctly.
+model = load_model(model_path, custom_objects={"efn_preprocess": efn_preprocess}, compile=False)
+print("Model loaded.")
+
+# -----------------------------
+# TTA augmentation — matches training script exactly
+# -----------------------------
+tta_aug = A.Compose([
+    A.RandomResizedCrop(size=(IMG_SIZE, IMG_SIZE), scale=(0.88, 1.0), ratio=(0.95, 1.05), p=1.0),
+    A.HorizontalFlip(p=0.5),
+    A.RandomBrightnessContrast(0.08, 0.08, p=0.3),
+])
 
 
-def ensure_model_downloaded():
-    """Download the .h5 from Hugging Face Hub if it's not already present locally."""
-    if os.path.exists(MODEL_PATH):
-        print(f"✅ Model already present at {MODEL_PATH}")
-        return
-    if not HF_MODEL_REPO:
-        return  # nothing to do; load_model_on_startup will raise a clear error
-    print(f"⬇️  Downloading {HF_MODEL_FILE} from {HF_MODEL_REPO} ...")
-    from huggingface_hub import hf_hub_download
-    downloaded_path = hf_hub_download(repo_id=HF_MODEL_REPO, filename=HF_MODEL_FILE)
-    # hf_hub_download caches the file elsewhere; symlink/copy it to MODEL_PATH
-    import shutil
-    shutil.copy(downloaded_path, MODEL_PATH)
-    print(f"✅ Model downloaded to {MODEL_PATH}")
+def temperature_scale(probs, temperature=TEMPERATURE):
+    log_p = np.log(probs + 1e-8)
+    scaled = np.exp(log_p / temperature)
+    return scaled / scaled.sum()
 
-# Same mixed precision policy used during training — must be set BEFORE
-# building/loading the model or weight shapes/dtypes can mismatch.
-mixed_precision.set_global_policy('mixed_float16')
 
-app = FastAPI(title="Sargassum Classifier API")
+# -----------------------------
+# Simple in-memory rate limiting (per-session, resets on restart — fine for a pilot)
+# -----------------------------
+request_log = {}
+RATE_LIMIT_PER_MIN = 10
 
-# Allow the frontend (served from anywhere) to call this API.
-# Tighten allow_origins to your actual website domain once deployed.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+
+def check_rate_limit(request: gr.Request):
+    if request is None:
+        return True
+    ip = request.client.host if request.client else "unknown"
+    now = time.time()
+    window = request_log.setdefault(ip, [])
+    window[:] = [t for t in window if now - t < 60]
+    if len(window) >= RATE_LIMIT_PER_MIN:
+        return False
+    window.append(now)
+    return True
+
+
+def predict(image, request: gr.Request):
+    if image is None:
+        return "Please upload an image.", None
+
+    if not check_rate_limit(request):
+        return "Rate limit reached — please wait a minute and try again.", None
+
+    try:
+        # NOTE: no manual preprocess_input call here — the model applies it
+        # internally via its Lambda layer. We only resize / feed raw pixels.
+        src = np.array(image.convert("RGB"))
+
+        imgs = [tta_aug(image=src)["image"].astype(np.float32) for _ in range(N_TTA)]
+        imgs.append(cv2.resize(src, (IMG_SIZE, IMG_SIZE)).astype(np.float32))
+        batch = np.array(imgs)
+
+        raw_probs = model.predict(batch, verbose=0).mean(axis=0)
+        probs = temperature_scale(raw_probs)
+
+        top_idx = int(np.argmax(probs))
+        confidence = float(probs[top_idx])
+        breakdown = {CLASS_NAMES[i]: float(probs[i]) for i in range(len(CLASS_NAMES))}
+
+        if confidence < CONFIDENCE_THRESHOLD:
+            label = f"⚠️ Review needed — best guess: {CLASS_NAMES[top_idx]} ({confidence:.1%})"
+        else:
+            label = f"✅ {CLASS_NAMES[top_idx]} ({confidence:.1%} confidence)"
+
+        return label, breakdown
+
+    except Exception as e:
+        return f"Error processing image: {e}", None
+
+
+# -----------------------------
+# UI
+# -----------------------------
+DISCLAIMER = (
+    "**Pilot / prototype model** — this tool is part of an ongoing research pilot "
+    "(LEMAR / IRD) and predictions are not yet validated for definitive identification. "
+    "This model is intentionally conservative: predictions below its confidence threshold "
+    "are flagged **'Review needed'** rather than stated confidently — you may see this "
+    "fairly often, especially on beach-collected (vs. lab) images. That's expected behavior, "
+    "not a bug. Feedback is welcome and helps improve the model."
 )
 
-model = None  # loaded on startup
+with gr.Blocks(title="Sargassum Morphotype Classifier — Pilot") as demo:
+    gr.Markdown("# 🌿 Sargassum Morphotype Classifier")
+    gr.Markdown(DISCLAIMER)
 
+    with gr.Row():
+        with gr.Column():
+            image_input = gr.Image(type="pil", label="Upload a Sargassum image")
+            submit_btn = gr.Button("Classify", variant="primary")
+        with gr.Column():
+            label_output = gr.Textbox(label="Prediction")
+            breakdown_output = gr.Label(label="Confidence by class")
 
-def build_model():
-    """Rebuild the exact training architecture (fallback if direct load fails)."""
-    base = EfficientNetB3(weights=None, include_top=False,
-                           input_shape=(IMG_SIZE, IMG_SIZE, 3))
-    inp = tf.keras.Input(shape=(IMG_SIZE, IMG_SIZE, 3))
-    x = layers.Lambda(efn_preprocess)(inp)
-    x = base(x, training=False)
-    x = layers.GlobalAveragePooling2D()(x)
-    x = layers.Dense(256, activation='relu',
-                      kernel_regularizer=tf.keras.regularizers.l2(1e-5))(x)
-    x = layers.Dropout(0.5)(x)
-    out = layers.Dense(NUM_CLASSES, activation='softmax', dtype='float32')(x)
-    return Model(inp, out)
+    submit_btn.click(
+        fn=predict,
+        inputs=[image_input],
+        outputs=[label_output, breakdown_output],
+    )
 
+    gr.Markdown(
+        "---\n"
+        "*Was this prediction correct? Feedback helps us improve the model — "
+        "contact the LEMAR Sargassum research team.*"
+    )
 
-@app.on_event("startup")
-def load_model_on_startup():
-    global model
-
-    ensure_model_downloaded()
-
-    print(f"📦 Loading model from {MODEL_PATH} ...")
-
-    if not os.path.exists(MODEL_PATH):
-        raise RuntimeError(
-            f"Model file not found at {MODEL_PATH}. Either commit it directly "
-            "(e.g. via Git LFS) or set HF_MODEL_REPO / HF_MODEL_FILE env vars "
-            "to download it from Hugging Face Hub at startup."
-        )
-
-    try:
-        model = load_model(
-            MODEL_PATH,
-            compile=False,
-            safe_mode=False,
-            custom_objects={'preprocess_input': efn_preprocess},
-        )
-        print("✅ Model loaded (direct load)")
-    except Exception as e1:
-        print(f"   Direct load failed ({type(e1).__name__}); trying rebuild + load_weights...")
-        try:
-            model = build_model()
-            model.load_weights(MODEL_PATH)
-            print("✅ Model loaded (rebuild + load_weights)")
-        except Exception as e2:
-            raise RuntimeError(
-                f"Both load methods failed.\nDirect: {e1}\nRebuild: {e2}"
-            )
-
-    # Warm up the model with a dummy forward pass so the first real
-    # request isn't slowed down by graph tracing.
-    dummy = np.zeros((1, IMG_SIZE, IMG_SIZE, 3), dtype=np.float32)
-    model.predict(dummy, verbose=0)
-    print("🔥 Model warmed up and ready")
-
-
-def preprocess_bytes(image_bytes: bytes) -> np.ndarray:
-    """Same preprocessing as the Colab tester: BGR decode -> RGB -> resize -> float32."""
-    data = np.frombuffer(image_bytes, np.uint8)
-    img_bgr = cv2.imdecode(data, cv2.IMREAD_COLOR)
-    if img_bgr is None:
-        raise ValueError("Could not decode image")
-    img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-    img_resized = cv2.resize(img_rgb, (IMG_SIZE, IMG_SIZE)).astype(np.float32)
-    return img_resized
-
-
-@app.get("/health")
-def health():
-    return {"status": "ok", "model_loaded": model is not None}
-
-
-@app.post("/predict")
-async def predict(file: UploadFile = File(...)):
-    if model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded yet")
-
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="File must be an image")
-
-    try:
-        image_bytes = await file.read()
-        img = preprocess_bytes(image_bytes)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid image: {e}")
-
-    probs = model.predict(img[np.newaxis, ...], verbose=0)[0]
-    probs = np.asarray(probs, dtype=np.float32)
-    pred_idx = int(np.argmax(probs))
-
-    return {
-        "prediction": CLASS_NAMES[pred_idx],
-        "confidence": float(probs[pred_idx]),
-        "probabilities": {
-            CLASS_NAMES[i]: float(probs[i]) for i in range(NUM_CLASSES)
-        },
-    }
-
-
-# ---- Serve the simple upload frontend at "/" ----
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-
-@app.get("/")
-def index():
-    return FileResponse("static/index.html")
+if __name__ == "__main__":
+    demo.launch()
