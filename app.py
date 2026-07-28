@@ -24,7 +24,7 @@ import numpy as np
 import cv2
 import albumentations as A
 import tensorflow as tf
-from tensorflow.keras import layers, Model, mixed_precision
+from tensorflow.keras import layers, Model
 from tensorflow.keras.models import load_model
 from tensorflow.keras.applications.efficientnet import (
     EfficientNetB3, preprocess_input as efn_preprocess)
@@ -79,9 +79,10 @@ def ensure_model_downloaded():
     print(f"✅ Model downloaded to {MODEL_PATH}")
 
 
-# Same mixed precision policy used during training — must be set BEFORE
-# building/loading the model or weight shapes/dtypes can mismatch.
-mixed_precision.set_global_policy('mixed_float16')
+# NOTE: mixed_float16 policy intentionally NOT set here. It's a GPU-only
+# optimization — on CPU (which is what this container runs on) it just adds
+# float16<->float32 casting overhead without saving memory the way it does
+# on GPU. The saved .h5 weights load fine under the default float32 policy.
 
 app = FastAPI(title="Sargassum Classifier API")
 
@@ -154,9 +155,10 @@ def load_model_on_startup():
                 f"Both load methods failed.\nDirect: {e1}\nRebuild: {e2}"
             )
 
-    # Warm up the model with a dummy batch (TTA_N_AUG + 1 images) so the
-    # first real request isn't slowed down by graph tracing.
-    dummy = np.zeros((TTA_N_AUG + 1, IMG_SIZE, IMG_SIZE, 3), dtype=np.float32)
+    # Warm up with a single dummy image, just enough to trigger graph
+    # tracing without spiking memory during the startup window (a full
+    # TTA_N_AUG+1 batch here was contributing to OOM kills on startup).
+    dummy = np.zeros((1, IMG_SIZE, IMG_SIZE, 3), dtype=np.float32)
     model.predict(dummy, verbose=0)
     print(f"🔥 Model warmed up and ready (TTA n_aug={TTA_N_AUG}, T={TEMPERATURE}, "
           f"threshold={CONFIDENCE_THRESHOLD})")

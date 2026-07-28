@@ -1,6 +1,7 @@
-# Hugging Face Spaces (Docker SDK) expects the app to listen on port 7860
+# Works on both Hugging Face Spaces (Docker SDK, fixed port 7860) and
+# Render (dynamic $PORT assigned at runtime) — CMD is shell-form so $PORT
+# gets expanded; falls back to 7860 if $PORT isn't set (e.g. on HF Spaces).
 FROM python:3.11-slim
-
 WORKDIR /app
 
 # System deps needed by opencv-python-headless
@@ -11,13 +12,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
 COPY . .
 
-# IMPORTANT: place your trained model file here before building, e.g.:
-#   sargassum-app/sargassum_model_beach1.h5
-# (not committed here since it's a large binary you already have on Drive)
+# The model is downloaded at container startup from Hugging Face Hub
+# (HF_MODEL_REPO / HF_MODEL_FILE env vars in app.py), so no local .h5
+# needs to be committed here.
 
 EXPOSE 7860
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]
+# Shell form (not exec/JSON-array form) so $PORT is expanded at runtime.
+# Render sets $PORT itself; falls back to 7860 for local/HF Spaces runs.
+CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-7860}
