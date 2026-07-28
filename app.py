@@ -1,73 +1,103 @@
-"""
-Sargassum Morphotype Classifier — FastAPI backend
-----------------------------------------------------
-Serves the custom static/index.html frontend and exposes POST /predict,
-matching what that frontend's fetch('/predict', ...) call expects:
-
-    Request:  multipart/form-data, field name "file" (an image)
-    Response: {
-        "prediction": "<display name>",
-        "confidence": <float 0-1>,
-        "probabilities": {"SNN": <float>, "SFF": <float>, "SNW": <float>}
-    }
-
-Inference matches the training script: preprocessing baked into the model
-(Lambda layer), TTA (7 augmented crops + 1 center resize, averaged),
-temperature scaling (T fit during calibration).
-"""
+# ================================================================
+# 🌐 SARGASSUM CLASSIFIER — FASTAPI SERVING APP
+# ================================================================
+# Serves the fine-tuned EfficientNetB3 "lab-first" model
+# (sargassum_model_lab_first.h5) behind a REST API + upload page,
+# for deployment on Hugging Face Spaces (Docker SDK).
+#
+# Mirrors the Colab "lab-first reliable fine-tuning" pipeline:
+#   - mixed_float16 policy set BEFORE loading (weight layout must match)
+#   - two-stage load: direct load_model() -> fallback rebuild + load_weights
+#   - preprocessing: BGR->RGB, resize to (300,300), float32
+#     (NO manual normalization — efn_preprocess is baked into the model
+#     via the Lambda layer, so we must NOT double-preprocess here)
+#   - TTA (7 augmented crops + 1 clean resize) is the DEFAULT inference
+#     mode, matching predict_with_tta() / predict_reliable() in training
+#   - Temperature scaling applied post-softmax (T fit on validation set
+#     during training: T = 0.852)
+#   - Safety gate: predictions below CONFIDENCE_THRESHOLD are flagged
+#     "review needed" instead of being reported as reliable
+# ================================================================
 
 import os
-import time
 import numpy as np
 import cv2
 import albumentations as A
-from io import BytesIO
-from PIL import Image
+import tensorflow as tf
+from tensorflow.keras import layers, Model, mixed_precision
+from tensorflow.keras.models import load_model
+from tensorflow.keras.applications.efficientnet import (
+    EfficientNetB3, preprocess_input as efn_preprocess)
 
-from fastapi import FastAPI, UploadFile, File, HTTPException, Request
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 
-from huggingface_hub import hf_hub_download, list_repo_files
-from tensorflow.keras.models import load_model
-from tensorflow.keras.applications.efficientnet import preprocess_input as efn_preprocess
+# ================================================================
+# ⚙️ SETTINGS — must match training/testing exactly
+# ================================================================
+MODEL_PATH  = os.environ.get("MODEL_PATH", "sargassum_model_lab_first.h5")
+CLASS_NAMES = ['SN1', 'SF3', 'SN8']
+IMG_SIZE    = 300
+NUM_CLASSES = len(CLASS_NAMES)
 
-# -----------------------------
-# CONFIG — matches training script
-# -----------------------------
-HF_REPO_ID = "Hossamfazaz/sargassum_enhanced_version"
-IMG_SIZE = 300
-CLASS_NAMES = ["SN1", "SF3", "SN8"]  # internal order — MUST match training's CLASS_TO_INDEX
-CONFIDENCE_THRESHOLD = 0.75
-TEMPERATURE = 0.852
-N_TTA = 7
+# Confidence threshold for the safety gate ("reliable" vs "review needed").
+# Lowered from the training default (0.85) to 0.75 per deployment request.
+CONFIDENCE_THRESHOLD = float(os.environ.get("CONFIDENCE_THRESHOLD", "0.75"))
 
-DISPLAY_CODE = {"SN1": "SNN", "SF3": "SFF", "SN8": "SNW"}
-DISPLAY_FULL = {
-    "SN1": "Sargassum natans natans",
-    "SF3": "Sargassum fluitans fluitans",
-    "SN8": "Sargassum natans wingei",
-}
+# Temperature scaling factor fit on the validation set during the
+# "lab-first" fine-tuning run (see TemperatureScaler.fit() output: T = 0.852).
+# If you retrain the model, re-fit this value and update it here — it's
+# baked in rather than fit at serving time because that requires the
+# validation set, which isn't available in the deployed container.
+TEMPERATURE = float(os.environ.get("TEMPERATURE", "0.852"))
+
+# Number of augmented TTA crops (+1 clean resize) averaged per prediction,
+# matching predict_with_tta(..., n_aug=7) / predict_reliable(...) in training.
+TTA_N_AUG = int(os.environ.get("TTA_N_AUG", "7"))
+
+# Hugging Face Hub model repo to download from at container startup if the
+# .h5 isn't already present locally.
+HF_MODEL_REPO = os.environ.get("HF_MODEL_REPO", "Hossamfazaz/sargassum_enhanced_version")
+HF_MODEL_FILE = os.environ.get("HF_MODEL_FILE", "sargassum_model_lab_first.h5")
 
 
-def display_name(internal_cls):
-    return f"{DISPLAY_FULL[internal_cls]} ({DISPLAY_CODE[internal_cls]})"
+def ensure_model_downloaded():
+    """Download the .h5 from Hugging Face Hub if it's not already present locally."""
+    if os.path.exists(MODEL_PATH):
+        print(f"✅ Model already present at {MODEL_PATH}")
+        return
+    if not HF_MODEL_REPO:
+        return  # nothing to do; load_model_on_startup will raise a clear error
+    print(f"⬇️  Downloading {HF_MODEL_FILE} from {HF_MODEL_REPO} ...")
+    from huggingface_hub import hf_hub_download
+    downloaded_path = hf_hub_download(repo_id=HF_MODEL_REPO, filename=HF_MODEL_FILE)
+    # hf_hub_download caches the file elsewhere; copy it to MODEL_PATH
+    import shutil
+    shutil.copy(downloaded_path, MODEL_PATH)
+    print(f"✅ Model downloaded to {MODEL_PATH}")
 
 
-# -----------------------------
-# Load model from Hugging Face Hub at startup
-# -----------------------------
-print(f"Locating model file in {HF_REPO_ID} ...")
-repo_files = list_repo_files(HF_REPO_ID)
-h5_files = [f for f in repo_files if f.endswith(".h5")]
-if not h5_files:
-    raise RuntimeError(f"No .h5 file found in {HF_REPO_ID}. Files present: {repo_files}")
-model_path = hf_hub_download(repo_id=HF_REPO_ID, filename=h5_files[0])
+# Same mixed precision policy used during training — must be set BEFORE
+# building/loading the model or weight shapes/dtypes can mismatch.
+mixed_precision.set_global_policy('mixed_float16')
 
-print("Loading model...")
-model = load_model(model_path, custom_objects={"efn_preprocess": efn_preprocess}, compile=False)
-print("Model loaded.")
+app = FastAPI(title="Sargassum Classifier API")
 
+# Allow the frontend (served from anywhere) to call this API.
+# Tighten allow_origins to your actual website domain once deployed.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+model = None  # loaded on startup
+
+# TTA augmentation pipeline — identical to predict_with_tta()/predict_reliable()
+# in the training script.
 tta_aug = A.Compose([
     A.RandomResizedCrop(size=(IMG_SIZE, IMG_SIZE), scale=(0.88, 1.0), ratio=(0.95, 1.05), p=1.0),
     A.HorizontalFlip(p=0.5),
@@ -75,90 +105,138 @@ tta_aug = A.Compose([
 ])
 
 
-def temperature_scale(probs, temperature=TEMPERATURE):
+def build_model():
+    """Rebuild the exact training architecture (fallback if direct load fails)."""
+    base = EfficientNetB3(weights=None, include_top=False,
+                           input_shape=(IMG_SIZE, IMG_SIZE, 3))
+    inp = tf.keras.Input(shape=(IMG_SIZE, IMG_SIZE, 3))
+    x = layers.Lambda(efn_preprocess)(inp)
+    x = base(x, training=False)
+    x = layers.GlobalAveragePooling2D()(x)
+    x = layers.Dense(256, activation='relu',
+                      kernel_regularizer=tf.keras.regularizers.l2(1e-5))(x)
+    x = layers.Dropout(0.5)(x)
+    out = layers.Dense(NUM_CLASSES, activation='softmax', dtype='float32')(x)
+    return Model(inp, out)
+
+
+@app.on_event("startup")
+def load_model_on_startup():
+    global model
+
+    ensure_model_downloaded()
+
+    print(f"📦 Loading model from {MODEL_PATH} ...")
+
+    if not os.path.exists(MODEL_PATH):
+        raise RuntimeError(
+            f"Model file not found at {MODEL_PATH}. Either commit it directly "
+            "(e.g. via Git LFS) or set HF_MODEL_REPO / HF_MODEL_FILE env vars "
+            "to download it from Hugging Face Hub at startup."
+        )
+
+    try:
+        model = load_model(
+            MODEL_PATH,
+            compile=False,
+            safe_mode=False,
+            custom_objects={'preprocess_input': efn_preprocess},
+        )
+        print("✅ Model loaded (direct load)")
+    except Exception as e1:
+        print(f"   Direct load failed ({type(e1).__name__}); trying rebuild + load_weights...")
+        try:
+            model = build_model()
+            model.load_weights(MODEL_PATH)
+            print("✅ Model loaded (rebuild + load_weights)")
+        except Exception as e2:
+            raise RuntimeError(
+                f"Both load methods failed.\nDirect: {e1}\nRebuild: {e2}"
+            )
+
+    # Warm up the model with a dummy batch (TTA_N_AUG + 1 images) so the
+    # first real request isn't slowed down by graph tracing.
+    dummy = np.zeros((TTA_N_AUG + 1, IMG_SIZE, IMG_SIZE, 3), dtype=np.float32)
+    model.predict(dummy, verbose=0)
+    print(f"🔥 Model warmed up and ready (TTA n_aug={TTA_N_AUG}, T={TEMPERATURE}, "
+          f"threshold={CONFIDENCE_THRESHOLD})")
+
+
+def decode_bytes(image_bytes: bytes) -> np.ndarray:
+    """BGR decode -> RGB, full resolution (TTA crops are applied downstream)."""
+    data = np.frombuffer(image_bytes, np.uint8)
+    img_bgr = cv2.imdecode(data, cv2.IMREAD_COLOR)
+    if img_bgr is None:
+        raise ValueError("Could not decode image")
+    return cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+
+
+def predict_with_tta_and_scaling(src_rgb: np.ndarray) -> np.ndarray:
+    """
+    Mirrors predict_reliable() from training:
+      - TTA_N_AUG augmented crops + 1 clean resize, averaged
+      - temperature scaling applied to the averaged probabilities
+    Returns a (NUM_CLASSES,) float32 array of calibrated probabilities.
+    """
+    imgs = [tta_aug(image=src_rgb)['image'].astype(np.float32) for _ in range(TTA_N_AUG)]
+    imgs.append(cv2.resize(src_rgb, (IMG_SIZE, IMG_SIZE)).astype(np.float32))
+
+    probs = model.predict(np.array(imgs), verbose=0).mean(axis=0)
+
+    # Temperature scaling: rescale the softmax "temperature" using the
+    # log-prob trick, same as TemperatureScaler.scale() in training.
+    probs = np.asarray(probs, dtype=np.float32)
     log_p = np.log(probs + 1e-8)
-    scaled = np.exp(log_p / temperature)
-    return scaled / scaled.sum()
+    scaled = tf.nn.softmax(log_p / TEMPERATURE, axis=-1).numpy()
+    return scaled
 
 
-# -----------------------------
-# Simple in-memory rate limiting (per-session, fine for a pilot)
-# -----------------------------
-request_log = {}
-RATE_LIMIT_PER_MIN = 10
-
-
-def check_rate_limit(ip: str) -> bool:
-    now = time.time()
-    window = request_log.setdefault(ip, [])
-    window[:] = [t for t in window if now - t < 60]
-    if len(window) >= RATE_LIMIT_PER_MIN:
-        return False
-    window.append(now)
-    return True
-
-
-# -----------------------------
-# App
-# -----------------------------
-app = FastAPI(title="Sargassum Morphotype Classifier")
-
-
-@app.get("/")
-def root():
-    return FileResponse("static/index.html")
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "model_loaded": model is not None,
+        "tta_n_aug": TTA_N_AUG,
+        "temperature": TEMPERATURE,
+        "confidence_threshold": CONFIDENCE_THRESHOLD,
+    }
 
 
 @app.post("/predict")
-async def predict(request: Request, file: UploadFile = File(...)):
-    ip = request.client.host if request.client else "unknown"
-    if not check_rate_limit(ip):
-        raise HTTPException(status_code=429, detail="Limite de requêtes atteinte — réessayez dans une minute.")
+async def predict(file: UploadFile = File(...)):
+    if model is None:
+        raise HTTPException(status_code=503, detail="Model not loaded yet")
 
-    if not file.content_type or not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Le fichier doit être une image.")
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
 
     try:
-        raw_bytes = await file.read()
-        image = Image.open(BytesIO(raw_bytes)).convert("RGB")
-        src = np.array(image)
-
-        imgs = [tta_aug(image=src)["image"].astype(np.float32) for _ in range(N_TTA)]
-        imgs.append(cv2.resize(src, (IMG_SIZE, IMG_SIZE)).astype(np.float32))
-        batch = np.array(imgs)
-
-        raw_probs = model.predict(batch, verbose=0).mean(axis=0)
-        probs = temperature_scale(raw_probs)
-
-        top_idx = int(np.argmax(probs))
-        confidence = float(probs[top_idx])
-        top_display = display_name(CLASS_NAMES[top_idx])
-
-        if confidence < CONFIDENCE_THRESHOLD:
-            prediction_label = f"⚠️ Vérification nécessaire — {top_display}"
-        else:
-            prediction_label = f"✅ {top_display}"
-
-        probabilities = {
-            DISPLAY_CODE[CLASS_NAMES[i]]: float(probs[i]) for i in range(len(CLASS_NAMES))
-        }
-
-        return {
-            "prediction": prediction_label,
-            "confidence": confidence,
-            "probabilities": probabilities,
-        }
-
-    except HTTPException:
-        raise
+        image_bytes = await file.read()
+        src_rgb = decode_bytes(image_bytes)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur lors du traitement de l'image : {e}")
+        raise HTTPException(status_code=400, detail=f"Invalid image: {e}")
+
+    probs = predict_with_tta_and_scaling(src_rgb)
+    pred_idx = int(np.argmax(probs))
+    confidence = float(probs[pred_idx])
+    is_reliable = confidence >= CONFIDENCE_THRESHOLD
+
+    return {
+        "prediction": CLASS_NAMES[pred_idx],
+        "confidence": confidence,
+        "reliable": is_reliable,
+        "status": "reliable" if is_reliable else "review needed",
+        "confidence_threshold": CONFIDENCE_THRESHOLD,
+        "probabilities": {
+            CLASS_NAMES[i]: float(probs[i]) for i in range(NUM_CLASSES)
+        },
+    }
 
 
-# Mount static AFTER routes so "/" and "/predict" above take priority
+# ---- Serve the simple upload frontend at "/" ----
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 7860)))
+@app.get("/")
+def index():
+    return FileResponse("static/index.html")
