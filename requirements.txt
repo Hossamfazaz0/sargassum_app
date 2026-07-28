@@ -6,3 +6,5 @@ keras==3.13.2
 opencv-python-headless==4.10.0.84
 numpy
 huggingface_hub==0.24.6
+albumentations
+pillow
