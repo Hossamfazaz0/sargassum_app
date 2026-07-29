@@ -111,6 +111,15 @@
 <main class="flex-1 w-full p-gutter md:p-margin-desktop min-h-[calc(100vh-64px)] relative">
 <div class="max-w-4xl mx-auto flex flex-col items-center justify-center h-full text-center">
 
+    <!-- Language selector -->
+    <div class="w-full flex justify-end mb-8">
+      <select id="langSelect" class="rounded border-outline px-4 py-2 pr-10 text-body-md bg-surface-container-low min-w-[110px]">
+        <option value="en">English</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+      </select>
+    </div>
+
 <!-- ICON -->
 <div id="mainIconWrap" class="mb-8 p-6 bg-surface-container-low rounded-2xl border border-outline-variant inline-block">
 <span class="material-symbols-outlined text-[64px] text-primary mb-4" style="font-variation-settings: 'wght' 200;">cloud_upload</span>
@@ -119,23 +128,23 @@
 <!-- Preview shown after a file is chosen -->
 <img id="mainPreview" class="hidden w-48 h-48 object-cover rounded-2xl mb-8 shadow-md border border-outline-variant" alt="Preview of uploaded specimen">
 
-<h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-4">Upload Sargassum Specimen</h1>
+<h1 id="mainHeading" class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-4">Upload Sargassum Specimen</h1>
 <p id="mainSubtext" class="font-body-lg text-body-lg text-on-surface-variant mb-12 max-w-2xl">
-                    Initiate AI classification by securely uploading a high-resolution image of your Sargassum sample. Our neural network will analyze morphological features for instant taxonomic identification.
-                </p>
+        Initiate AI classification by securely uploading a high-resolution image of your Sargassum sample. Our neural network will analyze morphological features for instant taxonomic identification.
+        </p>
 
 <button id="selectBtn" type="button" class="px-8 py-4 bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-all shadow-md hover:shadow-lg flex items-center gap-3 transform hover:-translate-y-0.5">
 <span class="material-symbols-outlined">upload_file</span>
 <span id="selectBtnLabel">Select Image to Upload</span>
 </button>
-<p class="font-label-sm text-label-sm text-outline mt-4">Supported formats: JPG, PNG, TIFF (Max 20MB)</p>
+<p id="supportedFormats" class="font-label-sm text-label-sm text-outline mt-4">Supported formats: JPG, PNG, TIFF (Max 20MB)</p>
 
 <input id="fileInput" accept="image/jpeg, image/png, image/tiff" class="hidden" type="file">
 
 <!-- RESULT CARD -->
 <div id="resultCard" class="hidden mt-10 w-full max-w-xl p-6 sm:p-8 rounded-2xl bg-surface-container-lowest border border-outline-variant shadow-sm text-left">
 <div class="flex items-center justify-between mb-4">
-<h3 class="font-headline-md text-on-surface text-lg">Result</h3>
+<h3 class="font-headline-md text-on-surface text-lg" data-i18n="result_title">Result</h3>
 <button id="resetBtn" type="button" class="text-on-surface-variant hover:text-secondary transition-colors">
 <span class="material-symbols-outlined text-[20px]">refresh</span>
 </button>
@@ -154,8 +163,8 @@
 <div class="bg-surface-container-lowest w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col my-4 sm:my-8 border border-outline-variant relative overflow-hidden animate-[fadeIn_0.3s_ease-out] max-h-[90vh]">
 <div class="p-6 sm:p-8 pb-6 border-b border-outline-variant bg-surface relative">
 <div class="absolute top-0 left-0 w-full h-1 bg-secondary"></div>
-<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-md text-primary mb-2 pr-8">Capture the Best Sargassum Image</h2>
-<p class="font-body-md text-body-md text-on-surface-variant">To achieve the highest classification accuracy, please ensure your photo follows these rigorous guidelines.</p>
+<h2 id="guideTitle" class="font-headline-lg text-headline-lg-mobile md:text-headline-md text-primary mb-2 pr-8">Capture the Best Sargassum Image</h2>
+<p id="guideDesc" class="font-body-md text-body-md text-on-surface-variant">To achieve the highest classification accuracy, please ensure your photo follows these rigorous guidelines.</p>
 <button id="closeModalBtn" type="button" class="absolute top-4 sm:top-6 right-4 sm:right-6 p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">
 <span class="material-symbols-outlined">close</span>
 </button>
@@ -170,35 +179,35 @@
 <div class="grid grid-cols-2 gap-2 sm:gap-4">
 <div class="bg-surface p-2 sm:p-3 rounded-lg border border-[#16a34a]/30 flex flex-col items-center text-center">
 <div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 overflow-hidden"><img src="/static/images/accepted-specimen.jpg" alt="Accepted: entire specimen visible" class="w-full h-full object-cover"></div>
-<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Entire specimen visible</span>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight" data-i18n="accepted_entire">Entire specimen visible</span>
 </div>
 <div class="bg-surface p-2 sm:p-3 rounded-lg border border-[#16a34a]/30 flex flex-col items-center text-center">
 <div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 overflow-hidden"><img src="/static/images/accepted-specimen.jpg" alt="Accepted: specimen centered" class="w-full h-full object-cover"></div>
-<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Specimen centered</span>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight" data-i18n="accepted_centered">Specimen centered</span>
 </div>
 <div class="bg-surface p-2 sm:p-3 rounded-lg border border-[#16a34a]/30 flex flex-col items-center text-center">
 <div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 flex items-center justify-center">
 <span class="material-symbols-outlined text-outline">wallpaper</span>
 </div>
-<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Plain light background</span>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight" data-i18n="accepted_plain_bg">Plain light background</span>
 </div>
 <div class="bg-surface p-2 sm:p-3 rounded-lg border border-[#16a34a]/30 flex flex-col items-center text-center">
 <div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 flex items-center justify-center">
 <span class="material-symbols-outlined text-outline">light_mode</span>
 </div>
-<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Good natural lighting</span>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight" data-i18n="accepted_lighting">Good natural lighting</span>
 </div>
 <div class="bg-surface p-2 sm:p-3 rounded-lg border border-[#16a34a]/30 flex flex-col items-center text-center">
 <div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 flex items-center justify-center">
 <span class="material-symbols-outlined text-outline">hd</span>
 </div>
-<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">High-resolution</span>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight" data-i18n="accepted_high_res">High-resolution</span>
 </div>
 <div class="bg-surface p-2 sm:p-3 rounded-lg border border-[#16a34a]/30 flex flex-col items-center text-center">
 <div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 flex items-center justify-center">
 <span class="material-symbols-outlined text-outline">filter_1</span>
 </div>
-<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">One specimen only</span>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight" data-i18n="accepted_one">One specimen only</span>
 </div>
 </div>
 </div>
@@ -210,33 +219,33 @@
 <div class="grid grid-cols-2 gap-2 sm:gap-4">
 <div class="bg-surface p-2 sm:p-3 rounded-lg border border-error/30 flex flex-col items-center text-center">
 <div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 flex items-center justify-center"><span class="material-symbols-outlined text-outline">blur_on</span></div>
-<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Blurry/Out-of-focus</span>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight" data-i18n="rejected_blur">Blurry/Out-of-focus</span>
 </div>
 <div class="bg-surface p-2 sm:p-3 rounded-lg border border-error/30 flex flex-col items-center text-center">
 <div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 flex items-center justify-center">
 <span class="material-symbols-outlined text-outline">contrast</span>
 </div>
-<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Dark shadows/Poor lighting</span>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight" data-i18n="rejected_dark">Dark shadows/Poor lighting</span>
 </div>
 <div class="bg-surface p-2 sm:p-3 rounded-lg border border-error/30 flex flex-col items-center text-center">
 <div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 flex items-center justify-center">
 <span class="material-symbols-outlined text-outline">crop</span>
 </div>
-<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Cropped specimen</span>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight" data-i18n="rejected_cropped">Cropped specimen</span>
 </div>
 <div class="bg-surface p-2 sm:p-3 rounded-lg border border-error/30 flex flex-col items-center text-center">
 <div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 overflow-hidden"><img src="/static/images/reject-overlapping.png" alt="Not accepted: overlapping specimens" class="w-full h-full object-cover"></div>
-<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Overlapping specimens</span>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight" data-i18n="rejected_overlap">Overlapping specimens</span>
 </div>
 <div class="bg-surface p-2 sm:p-3 rounded-lg border border-error/30 flex flex-col items-center text-center">
 <div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 overflow-hidden"><img src="/static/images/reject-cluttered.png" alt="Not accepted: cluttered background" class="w-full h-full object-cover"></div>
-<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Cluttered background</span>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight" data-i18n="rejected_clutter">Cluttered background</span>
 </div>
 <div class="bg-surface p-2 sm:p-3 rounded-lg border border-error/30 flex flex-col items-center text-center">
 <div class="w-full h-16 sm:h-24 bg-surface-container-low rounded mb-2 sm:mb-3 flex items-center justify-center">
 <span class="material-symbols-outlined text-outline">sd</span>
 </div>
-<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight">Low-resolution/Noisy</span>
+<span class="font-label-sm text-[10px] sm:text-label-sm text-on-surface leading-tight" data-i18n="rejected_low_res">Low-resolution/Noisy</span>
 </div>
 </div>
 </div>
@@ -244,13 +253,13 @@
 <div class="mt-6 sm:mt-8 bg-surface-container-low border border-outline-variant p-4 sm:p-6 rounded-xl flex gap-3 sm:gap-4">
 <span class="material-symbols-outlined text-secondary mt-1">info</span>
 <div>
-<h4 class="font-label-md text-label-md text-primary mb-2">Tips for Best Results</h4>
-<ul class="font-body-md text-body-md text-on-surface-variant flex flex-wrap gap-x-6 sm:gap-x-8 gap-y-1 sm:gap-y-2 list-disc list-inside">
-<li class="">Lay specimen flat</li>
-<li class="">Top-down view</li>
-<li class="">Leave a margin</li>
-<li class="">Avoid reflections</li>
-<li class="">No other objects</li>
+<h4 class="font-label-md text-label-md text-primary mb-2" data-i18n="tips_title">Tips for Best Results</h4>
+<ul id="tipsList" class="font-body-md text-body-md text-on-surface-variant flex flex-wrap gap-x-6 sm:gap-x-8 gap-y-1 sm:gap-y-2 list-disc list-inside">
+  <li data-i18n="tip_flat">Lay specimen flat</li>
+  <li data-i18n="tip_topdown">Top-down view</li>
+  <li data-i18n="tip_margin">Leave a margin</li>
+  <li data-i18n="tip_reflections">Avoid reflections</li>
+  <li data-i18n="tip_no_objects">No other objects</li>
 </ul>
 </div>
 </div>
@@ -258,7 +267,7 @@
 <div class="p-4 sm:p-6 border-t border-outline-variant bg-surface flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-4">
 <label class="flex items-center gap-2 cursor-pointer group w-full md:w-auto mb-2 md:mb-0 justify-center">
 <input id="dontShowAgain" class="rounded border-outline text-secondary focus:ring-secondary w-4 h-4 bg-surface-container-lowest" type="checkbox">
-<span class="font-body-md text-body-md text-on-surface-variant group-hover:text-on-surface transition-colors">Don't show this guide again</span>
+<span id="dontShowLabel" class="font-body-md text-body-md text-on-surface-variant group-hover:text-on-surface transition-colors">Don't show this guide again</span>
 </label>
 <div class="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 w-full md:w-auto">
 <button id="cancelModalBtn" type="button" class="w-full sm:w-auto px-6 py-3 sm:py-2 rounded-lg border border-primary text-primary font-label-md text-label-md hover:bg-surface-container-high transition-colors">
@@ -286,12 +295,16 @@
   // HTML file, set the full URL here, e.g. "https://sargassum-classifier.onrender.com/predict"
   const PREDICT_URL = "/predict";
   const SKIP_GUIDE_KEY = "sargassum_skip_guide";
+  const LANG_KEY = "sargassum_lang";
 
+  // Elements
   const guideModal = document.getElementById('guideModal');
   const closeModalBtn = document.getElementById('closeModalBtn');
   const cancelModalBtn = document.getElementById('cancelModalBtn');
   const continueBtn = document.getElementById('continueBtn');
   const dontShowAgain = document.getElementById('dontShowAgain');
+  const dontShowLabel = document.getElementById('dontShowLabel');
+  const langSelect = document.getElementById('langSelect');
 
   const selectBtn = document.getElementById('selectBtn');
   const selectBtnLabel = document.getElementById('selectBtnLabel');
@@ -299,11 +312,63 @@
   const mainIconWrap = document.getElementById('mainIconWrap');
   const mainPreview = document.getElementById('mainPreview');
   const mainSubtext = document.getElementById('mainSubtext');
+  const mainHeading = document.getElementById('mainHeading');
+  const supportedFormats = document.getElementById('supportedFormats');
   const resultCard = document.getElementById('resultCard');
   const verdict = document.getElementById('verdict');
   const probBars = document.getElementById('probBars');
   const errorBox = document.getElementById('errorBox');
   const resetBtn = document.getElementById('resetBtn');
+
+  let LOCALE = {};
+
+  function format(text, vars={}){
+    return text.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
+  }
+
+  async function loadLocale(lang){
+    try{
+      const res = await fetch(`/static/locales/${lang}.json`);
+      if(!res.ok) throw new Error('Locale not found');
+      LOCALE = await res.json();
+      applyLocale();
+    }catch(e){
+      if(lang !== 'en') return loadLocale('en');
+    }
+  }
+
+  function applyLocale(){
+    document.documentElement.lang = (langSelect.value || 'en');
+    if(LOCALE.title) document.title = LOCALE.title;
+    if(LOCALE.mainHeading) mainHeading.textContent = LOCALE.mainHeading;
+    if(LOCALE.mainSubtext) mainSubtext.textContent = LOCALE.mainSubtext;
+    if(LOCALE.selectBtnLabel) selectBtnLabel.textContent = LOCALE.selectBtnLabel;
+    if(LOCALE.supportedFormats) supportedFormats.textContent = LOCALE.supportedFormats;
+    if(LOCALE.dont_show) dontShowLabel.textContent = LOCALE.dont_show;
+    if(LOCALE.guideTitle) document.getElementById('guideTitle').textContent = LOCALE.guideTitle;
+    if(LOCALE.guideDesc) document.getElementById('guideDesc').textContent = LOCALE.guideDesc;
+
+    // Generic data-i18n attributes
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if(LOCALE[key]) el.textContent = LOCALE[key];
+    });
+
+    // Localize modal buttons and labels
+    if(LOCALE.cancel) cancelModalBtn.textContent = LOCALE.cancel;
+    if(LOCALE.continue) continueBtn.textContent = LOCALE.continue;
+  }
+
+  // Initialize language from localStorage or navigator
+  const initialLang = localStorage.getItem(LANG_KEY) || (navigator.language && navigator.language.startsWith('es') ? 'es' : (navigator.language && navigator.language.startsWith('fr') ? 'fr' : 'en'));
+  langSelect.value = initialLang;
+  loadLocale(initialLang);
+
+  langSelect.addEventListener('change', () => {
+    const v = langSelect.value || 'en';
+    localStorage.setItem(LANG_KEY, v);
+    loadLocale(v);
+  });
 
   // Show the guide modal by default, unless the user previously opted out.
   function initGuide() {
@@ -344,8 +409,8 @@
     fileInput.value = '';
     mainPreview.classList.add('hidden');
     mainIconWrap.classList.remove('hidden');
-    selectBtnLabel.textContent = 'Select Image to Upload';
-    mainSubtext.textContent = 'Initiate AI classification by securely uploading a high-resolution image of your Sargassum sample. Our neural network will analyze morphological features for instant taxonomic identification.';
+    selectBtnLabel.textContent = LOCALE.selectBtnLabel || 'Select Image to Upload';
+    mainSubtext.textContent = LOCALE.mainSubtext || 'Initiate AI classification by securely uploading a high-resolution image of your Sargassum sample. Our neural network will analyze morphological features for instant taxonomic identification.';
     resultCard.classList.add('hidden');
     errorBox.classList.add('hidden');
   }
@@ -362,8 +427,8 @@
     };
     reader.readAsDataURL(file);
 
-    selectBtnLabel.textContent = 'Analyzing...';
-    mainSubtext.textContent = `Processing ${file.name} — this usually takes a couple of seconds.`;
+    selectBtnLabel.textContent = LOCALE.analyzing || 'Analyzing...';
+    mainSubtext.textContent = format(LOCALE.processing || 'Processing {file} — this usually takes a couple of seconds.', { file: file.name });
 
     const formData = new FormData();
     formData.append('file', file);
@@ -375,29 +440,44 @@
         throw new Error(errBody.detail || `Server error (${res.status})`);
       }
       const data = await res.json();
-      selectBtnLabel.textContent = 'Upload Another Image';
-      mainSubtext.textContent = 'Classification complete — see the result below.';
+      selectBtnLabel.textContent = LOCALE.uploadAnother || 'Upload Another Image';
+      mainSubtext.textContent = LOCALE.completeSubtext || 'Classification complete — see the result below.';
       renderResult(data);
     } catch (err) {
-      selectBtnLabel.textContent = 'Select Image to Upload';
-      mainSubtext.textContent = 'Something went wrong — please try again with a different image.';
+      selectBtnLabel.textContent = LOCALE.selectBtnLabel || 'Select Image to Upload';
+      mainSubtext.textContent = LOCALE.error_subtext || 'Something went wrong — please try again with a different image.';
       errorBox.textContent = '⚠️ ' + err.message;
       errorBox.classList.remove('hidden');
     }
   }
 
   function renderResult(data) {
-    verdict.textContent = `${data.prediction} — ${(data.confidence * 100).toFixed(1)}% confidence`;
+    // Resolve display name from locale resource with a JavaScript fallback
+    function getDisplayName(code){
+      const key = 'class_' + code;
+      if(LOCALE && LOCALE[key]) return LOCALE[key];
+      const FALLBACK = {
+        'SN1': 'Sargassum natans natans (SNN)',
+        'SN8': 'Sargassum natans wingei (SNW)',
+        'SF3': 'Sargassum fluitans fluitans (SFF)'
+      };
+      return FALLBACK[code] || code;
+    }
+
+    const displayPrediction = getDisplayName(data.prediction);
+    verdict.textContent = `${displayPrediction} — ${(data.confidence * 100).toFixed(1)}% confidence`;
 
     const entries = Object.entries(data.probabilities).sort((a, b) => b[1] - a[1]);
     probBars.innerHTML = '';
     for (const [name, prob] of entries) {
       const pct = (prob * 100).toFixed(1);
+      const displayName = getDisplayName(name);
       const row = document.createElement('div');
       row.className = 'flex items-center gap-3';
       row.innerHTML = `
-        <span class="font-label-md text-label-md text-on-surface-variant w-14">${name}</span>
-        <div class="flex-1 h-2 bg-surface-variant rounded-full overflow-hidden">
+        <span class="font-label-md text-label-md text-on-surface-variant w-48">${displayName}</span>
+        <div class="flex-1 h-2 bg-surface-variant rounded-full overflow-hidden">`;
+      row.innerHTML += `
           <div class="h-full bg-secondary rounded-full" style="width:${pct}%"></div>
         </div>
         <span class="font-label-sm text-label-sm text-on-surface-variant w-12 text-right">${pct}%</span>

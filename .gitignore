@@ -1,0 +1,26 @@
+# Python cache and virtualenv
+__pycache__/
+*.py[cod]
+.Python
+env/
+venv/
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE/editor
+.vscode/
+.idea/
+.DS_Store
+
+# Logs
+*.log
+
+# Build / distribution
+*.egg-info/
+dist/
+build/
+
+# Local model files (do not commit large model weights)
+sargassum_model_lab_first.h5
